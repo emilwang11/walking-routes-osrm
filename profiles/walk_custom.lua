@@ -75,16 +75,16 @@ function setup()
 
     speeds = Sequence {
       highway = {
-        primary         = walking_speed * 0.85,
-        primary_link    = walking_speed * 0.85,
-        secondary       = walking_speed * 0.9,
-        secondary_link  = walking_speed * 0.9,
+        primary         = walking_speed,
+        primary_link    = walking_speed,
+        secondary       = walking_speed,
+        secondary_link  = walking_speed,
         tertiary        = walking_speed,
         tertiary_link   = walking_speed,
         unclassified    = walking_speed,
         residential     = walking_speed,
         road            = walking_speed,
-        living_street   = walking_speed * 1.15,
+        living_street   = walking_speed,
         service         = walking_speed,
         track           = walking_speed,
         path            = walking_speed,
