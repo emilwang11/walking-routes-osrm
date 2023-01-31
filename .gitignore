@@ -106,3 +106,13 @@ debug.lua
 # node-osrm artifacts
 lib/binding
 
+<<<<<<< HEAD
+=======
+
+# debug copies
+profiles/debug_way copy.lua
+profiles/debug_example copy.lua
+
+# data
+ontario-latest*.*
+>>>>>>> 7b14e051c (add to gitignore)
