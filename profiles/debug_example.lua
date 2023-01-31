@@ -4,7 +4,7 @@
 --
 -- To use, make a copy of this file and gitignore your copy. (If you use the name ndebug.lua,
 -- it's already gitignored.)
--- 
+--
 -- You run your copy via the lua command line:
 --    > cd profiles
 --    > lua debug_example.lua
@@ -23,7 +23,7 @@ local pprint = require('lib/pprint')
 local Debug = require('lib/profile_debugger')
 
 -- load the profile we want to debug
-Debug.load_profile('foot') 
+Debug.load_profile('walk_custom')
 
 -- define some input tags. they would normally by extracted from OSM data,
 -- but here we can set them manually which makes debugging the profile eaiser
@@ -46,5 +46,5 @@ print("=>")
 pprint(result)
 print("\n")
 
--- report what tags where fetched, and how many times 
+-- report what tags where fetched, and how many times
 Debug.report_tag_fetches()
