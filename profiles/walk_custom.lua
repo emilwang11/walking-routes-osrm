@@ -93,9 +93,7 @@ function setup()
         footway         = walking_speed,
         pier            = walking_speed,
       },
-      -- speed_limit = {
-      --   maxspeed
-      -- }
+
       railway = {
         platform        = walking_speed
       },
@@ -171,41 +169,41 @@ function safety_handler(profile,way,result,data)
   --sidewalks
   -- local tag = node:get_value_by_key("highway")
   -- if not("pedestrian" == tag or "footway" == tag) then
-    if data.highway != 'pedestrian' or data.highway != 'footway'
+    if not (data.highway == 'pedestrian' or data.highway == 'footway') then
       local safety_penalty = safety_penalty * 0.5
     end
 
     --lighting
-    if data.highway != 'streetlamp' or data.lit != 'yes'
+    if not (data.highway == 'streetlamp' or data.lit == 'yes') then
       safety_penalty = safety_penalty * 0.5
     end
 
     --speed limits
-    if data.maxspeed
+    if data.maxspeed then
       speedlimit =tonumber(data.maxspeed)
-      if speedlimit < 30
+      if speedlimit < 30 then
         safety_penalty = safety_penalty * 1
-      elseif speed_limit < 70
+      elseif speed_limit < 70 then
         safety_penalty = safety_penalty * 0.7
-      elseif
+      else
         safety_penalty = safety_penalty * 0.3
       end
     end
 
     --type of road
-    if data.highway == 'motorway'
+    if data.highway == 'motorway' then
       safety_penalty = safety_penalty * 0.5
-    elseif data.highway == 'trunk'
+    elseif data.highway == 'trunk' then
       safety_penalty = safety_penalty * 0.55
-    elseif data.highway == 'primary'
+    elseif data.highway == 'primary' then
       safety_penalty = safety_penalty * 0.6
-    elseif data.highway == 'secondary'
+    elseif data.highway == 'secondary' then
       safety_penalty = safety_penalty * 0.8
-    elseif data.highway == 'tertiary'
+    elseif data.highway == 'tertiary' then
       safety_penalty = safety_penalty * 0.95
-    elseif data.highway == 'uunclassified'
+    elseif data.highway == 'uunclassified'then
       safety_penalty = safety_penalty * 1
-    elseif data.highway == 'residential'
+    elseif data.highway == 'residential' then
       safety_penalty = safety_penalty * 1
     end
 
