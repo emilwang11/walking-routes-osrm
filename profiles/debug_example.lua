@@ -7,7 +7,7 @@
 -- 
 -- You run your copy via the lua command line:
 --    > cd profiles
---    > lua5.1 debug.lua
+--    > lua debug_example.lua
 --
 -- You can then modify the input tags and rerun the file to check the output.
 --

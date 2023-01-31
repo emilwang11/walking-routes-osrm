@@ -106,3 +106,9 @@ debug.lua
 # node-osrm artifacts
 lib/binding
 
+#debug copies
+profiles/debug_way copy.lua
+profiles/debug_example copy.lua
+
+# data
+ontario-latest*.*
