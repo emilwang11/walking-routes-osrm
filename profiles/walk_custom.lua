@@ -5,7 +5,6 @@ api_version = 2
 Set = require('lib/set')
 Sequence = require('lib/sequence')
 Handlers = require("lib/way_handlers")
-limit = require("lib/maxspeed").limit
 find_access_tag = require("lib/access").find_access_tag
 
 function setup()
@@ -15,7 +14,7 @@ function setup()
       weight_name                   = 'duration',
       max_speed_for_map_matching    = 40/3.6, -- kmph -> m/s
       call_tagless_node_function    = false,
-      traffic_light_penalty         = 2,-- what does 2 mean? should we increase the penalty?
+      traffic_light_penalty         = 2,
       u_turn_penalty                = 2,
       continue_straight_at_waypoint = false,
       use_turn_restrictions         = false,
@@ -163,59 +162,6 @@ function process_node(profile, node, result)
   end
 end
 
-function safety_handler(profile,way,result,data)
-
-  local safety_penalty = 1
-  --sidewalks
-  -- local tag = node:get_value_by_key("highway")
-  -- if not("pedestrian" == tag or "footway" == tag) then
-    if not (data.highway == 'pedestrian' or data.highway == 'footway') then
-      local safety_penalty = safety_penalty * 0.5
-    end
-
-    --lighting
-    if not (data.highway == 'streetlamp' or data.lit == 'yes') then
-      safety_penalty = safety_penalty * 0.5
-    end
-
-    --speed limits
-    if data.maxspeed then
-      speedlimit =tonumber(data.maxspeed)
-      if speedlimit < 30 then
-        safety_penalty = safety_penalty * 1
-      elseif speed_limit < 70 then
-        safety_penalty = safety_penalty * 0.7
-      else
-        safety_penalty = safety_penalty * 0.3
-      end
-    end
-
-    --type of road
-    if data.highway == 'motorway' then
-      safety_penalty = safety_penalty * 0.5
-    elseif data.highway == 'trunk' then
-      safety_penalty = safety_penalty * 0.55
-    elseif data.highway == 'primary' then
-      safety_penalty = safety_penalty * 0.6
-    elseif data.highway == 'secondary' then
-      safety_penalty = safety_penalty * 0.8
-    elseif data.highway == 'tertiary' then
-      safety_penalty = safety_penalty * 0.95
-    elseif data.highway == 'uunclassified'then
-      safety_penalty = safety_penalty * 1
-    elseif data.highway == 'residential' then
-      safety_penalty = safety_penalty * 1
-    end
-
-    if result.forward_speed > 0 then
-      -- convert from km/h to m/s
-      result.forward_rate = result.forward_speed / 3.6 * safety_penalty
-    end
-    if result.duration > 0 then
-      result.weight = result.duration / safety_penalty
-    end
-  end
-
 -- main entry point for processsing a way
 function process_way(profile, way, result)
   -- the intial filtering of ways based on presence of tags
@@ -251,6 +197,47 @@ function process_way(profile, way, result)
     return
   end
 
+function safety_handler(profile,way,result,data)
+  if profile.properties.weight_name == 'cyclability' then
+    local safety_penalty = 1
+    --sidewalks
+    -- local tag = node:get_value_by_key("highway")
+    -- if not("pedestrian" == tag or "footway" == tag) then
+      if not (data.highway == 'pedestrian' or data.highway == 'footway') then
+        local safety_penalty = safety_penalty * 0.5
+      end
+
+      --lighting
+      if not (data.highway == 'streetlamp' or data.lit == 'yes') then
+        safety_penalty = safety_penalty * 0.5
+      end
+
+      --speed limits
+      if data.maxspeed then
+        speedlimit =tonumber(data.maxspeed)
+        if speedlimit < 30 then
+          safety_penalty = safety_penalty * 1
+        elseif speed_limit < 70 then
+          safety_penalty = safety_penalty * 0.7
+        else
+          safety_penalty = safety_penalty * 0.3
+        end
+      end
+
+      if result.forward_speed > 0 then
+        -- convert from km/h to m/s
+        result.forward_rate = result.forward_speed / 3.6 * safety_penalty
+      end
+      if result.backward_speed > 0 then
+        -- convert from km/h to m/s
+        result.backward_rate = result.backward_speed / 3.6 * safety_penalty
+      end
+      if result.duration > 0 then
+        result.weight = result.duration / safety_penalty
+      end
+  end
+end
+
   local handlers = Sequence {
     -- set the default mode for this profile. if can be changed later
     -- in case it turns we're e.g. on a ferry
@@ -277,7 +264,6 @@ function process_way(profile, way, result)
 
     -- compute speed taking into account way type, maxspeed tags, etc.
     WayHandlers.speed,
-    WayHandlers.maxspeed,
     WayHandlers.surface,
 
     -- handle turn lanes and road classification, used for guidance
