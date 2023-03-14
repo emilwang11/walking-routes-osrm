@@ -6,6 +6,7 @@ Set = require('lib/set')
 Sequence = require('lib/sequence')
 Handlers = require("lib/way_handlers")
 find_access_tag = require("lib/access").find_access_tag
+Measure = require("lib/measure")
 
 function setup()
   local walking_speed = 5
@@ -162,6 +163,52 @@ function process_node(profile, node, result)
   end
 end
 
+function safety_handler(profile,way,result,data)
+  result.forward_speed = profile.default_speed
+  result.backward_speed = profile.default_speed
+
+  local safety_penalty = 1
+  --sidewalks
+  -- local tag = node:get_value_by_key("highway")
+  -- if not("pedestrian" == tag or "footway" == tag) then
+  if not (data.highway == 'pedestrian' or data.highway == 'footway') then
+    safety_penalty = safety_penalty * 0.1
+  else 
+    safety_penalty = safety_penalty * 1.3
+  end
+
+  --lighting
+  if not (data.highway == 'streetlamp' or data.lit == 'yes') then
+    safety_penalty = safety_penalty * 0.1
+  else 
+    safety_penalty = safety_penalty * 1.3
+  end
+
+  --speed limits
+  if data.maxspeed then
+    if data.maxspeed < 30 then
+      safety_penalty = safety_penalty * 1
+    elseif data.maxspeed < 70 then
+      safety_penalty = safety_penalty * 0.7
+    else
+      safety_penalty = safety_penalty * 0.3
+    end
+  end
+
+  if result.forward_speed > 0 then
+    -- convert from km/h to m/s
+    result.forward_rate = result.forward_speed / 3.6 * safety_penalty
+  end
+  if result.backward_speed > 0 then
+    -- convert from km/h to m/s
+    result.backward_rate = result.backward_speed / 3.6 * safety_penalty
+  end
+
+  if result.duration > 0 then
+    result.weight = result.duration / safety_penalty
+  end
+end
+
 -- main entry point for processsing a way
 function process_way(profile, way, result)
   -- the intial filtering of ways based on presence of tags
@@ -186,7 +233,9 @@ function process_way(profile, way, result)
     railway = way:get_value_by_key('railway'),
     platform = way:get_value_by_key('platform'),
     amenity = way:get_value_by_key('amenity'),
-    public_transport = way:get_value_by_key('public_transport')
+    public_transport = way:get_value_by_key('public_transport'),
+    maxspeed = Measure.get_max_speed(way:get_value_by_key ("maxspeed")) or 0,
+    lit = way:get_value_by_key('lit')
   }
 
   -- perform an quick initial check and abort if the way is
@@ -197,47 +246,6 @@ function process_way(profile, way, result)
     return
   end
 
-function safety_handler(profile,way,result,data)
-  if profile.properties.weight_name == 'cyclability' then
-    local safety_penalty = 1
-    --sidewalks
-    -- local tag = node:get_value_by_key("highway")
-    -- if not("pedestrian" == tag or "footway" == tag) then
-      if not (data.highway == 'pedestrian' or data.highway == 'footway') then
-        local safety_penalty = safety_penalty * 0.5
-      end
-
-      --lighting
-      if not (data.highway == 'streetlamp' or data.lit == 'yes') then
-        safety_penalty = safety_penalty * 0.5
-      end
-
-      --speed limits
-      if data.maxspeed then
-        speedlimit =tonumber(data.maxspeed)
-        if speedlimit < 30 then
-          safety_penalty = safety_penalty * 1
-        elseif speed_limit < 70 then
-          safety_penalty = safety_penalty * 0.7
-        else
-          safety_penalty = safety_penalty * 0.3
-        end
-      end
-
-      if result.forward_speed > 0 then
-        -- convert from km/h to m/s
-        result.forward_rate = result.forward_speed / 3.6 * safety_penalty
-      end
-      if result.backward_speed > 0 then
-        -- convert from km/h to m/s
-        result.backward_rate = result.backward_speed / 3.6 * safety_penalty
-      end
-      if result.duration > 0 then
-        result.weight = result.duration / safety_penalty
-      end
-  end
-end
-
   local handlers = Sequence {
     -- set the default mode for this profile. if can be changed later
     -- in case it turns we're e.g. on a ferry
@@ -247,6 +255,8 @@ end
     -- routable. this includes things like status=impassable,
     -- toll=yes and oneway=reversible
     WayHandlers.blocked_ways,
+
+    safety_handler,
 
     -- determine access status by checking our hierarchy of
     -- access tags, e.g: motorcar, motor_vehicle, vehicle
