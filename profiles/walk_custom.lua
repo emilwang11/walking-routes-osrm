@@ -12,7 +12,7 @@ function setup()
   local walking_speed = 5
   return {
     properties = {
-      weight_name                   = 'duration',
+      weight_name                   = 'safety',
       max_speed_for_map_matching    = 40/3.6, -- kmph -> m/s
       call_tagless_node_function    = false,
       traffic_light_penalty         = 2,
@@ -164,48 +164,48 @@ function process_node(profile, node, result)
 end
 
 function safety_handler(profile,way,result,data)
-  result.forward_speed = profile.default_speed
-  result.backward_speed = profile.default_speed
+  if profile.properties.weight_name == 'safety' then
+    -- smaller penalty is worse, increases weight and decreases rate
+    local safety_penalty = 1.0
 
-  local safety_penalty = 1
-  --sidewalks
-  -- local tag = node:get_value_by_key("highway")
-  -- if not("pedestrian" == tag or "footway" == tag) then
-  if not (data.highway == 'pedestrian' or data.highway == 'footway') then
-    safety_penalty = safety_penalty * 0.1
-  else 
-    safety_penalty = safety_penalty * 1.3
-  end
+    -- --sidewalks
+    -- -- local tag = node:get_value_by_key("highway")
+    -- -- if not("pedestrian" == tag or "footway" == tag) then
+    -- if not (data.highway == 'pedestrian' or data.highway == 'footway') then
+    --   safety_penalty = safety_penalty * 0.5
+    -- else 
+    --   safety_penalty = safety_penalty * 1.3
+    -- end
 
-  --lighting
-  if not (data.highway == 'streetlamp' or data.lit == 'yes') then
-    safety_penalty = safety_penalty * 0.1
-  else 
-    safety_penalty = safety_penalty * 1.3
-  end
+    -- --lighting
+    -- if not (data.highway == 'streetlamp' or data.lit == 'yes') then
+    --   safety_penalty = safety_penalty * 0.6
+    -- else 
+    --   safety_penalty = safety_penalty * 1.2
+    -- end
 
-  --speed limits
-  if data.maxspeed then
-    if data.maxspeed < 30 then
-      safety_penalty = safety_penalty * 1
-    elseif data.maxspeed < 70 then
-      safety_penalty = safety_penalty * 0.7
-    else
-      safety_penalty = safety_penalty * 0.3
+    -- --speed limits
+    -- if data.maxspeed then
+    --   if data.maxspeed < 30 then
+    --     safety_penalty = safety_penalty * 1
+    --   elseif data.maxspeed < 70 then
+    --     safety_penalty = safety_penalty * 0.7
+    --   else
+    --     safety_penalty = safety_penalty * 0.3
+    --   end
+    -- end
+
+    if result.forward_speed > 0 then
+      -- convert from km/h to m/s
+      result.forward_rate = (result.forward_speed * safety_penalty) / 3.6 
     end
-  end
-
-  if result.forward_speed > 0 then
-    -- convert from km/h to m/s
-    result.forward_rate = result.forward_speed / 3.6 * safety_penalty
-  end
-  if result.backward_speed > 0 then
-    -- convert from km/h to m/s
-    result.backward_rate = result.backward_speed / 3.6 * safety_penalty
-  end
-
-  if result.duration > 0 then
-    result.weight = result.duration / safety_penalty
+    if result.backward_speed > 0 then
+      -- convert from km/h to m/s
+      result.backward_rate = (result.backward_speed * safety_penalty) / 3.6
+    end
+    if result.duration > 0 then
+      result.weight = (result.duration / safety_penalty)
+    end
   end
 end
 
@@ -256,8 +256,6 @@ function process_way(profile, way, result)
     -- toll=yes and oneway=reversible
     WayHandlers.blocked_ways,
 
-    safety_handler,
-
     -- determine access status by checking our hierarchy of
     -- access tags, e.g: motorcar, motor_vehicle, vehicle
     WayHandlers.access,
@@ -275,6 +273,9 @@ function process_way(profile, way, result)
     -- compute speed taking into account way type, maxspeed tags, etc.
     WayHandlers.speed,
     WayHandlers.surface,
+
+    -- compute safety
+    safety_handler,
 
     -- handle turn lanes and road classification, used for guidance
     WayHandlers.classification,
