@@ -168,32 +168,30 @@ function safety_handler(profile,way,result,data)
     -- smaller penalty is worse, increases weight and decreases rate
     local safety_penalty = 1.0
 
-    -- --sidewalks
-    -- -- local tag = node:get_value_by_key("highway")
-    -- -- if not("pedestrian" == tag or "footway" == tag) then
-    -- if not (data.highway == 'pedestrian' or data.highway == 'footway') then
-    --   safety_penalty = safety_penalty * 0.5
-    -- else 
-    --   safety_penalty = safety_penalty * 1.3
-    -- end
-
-    -- --lighting
-    -- if not (data.highway == 'streetlamp' or data.lit == 'yes') then
-    --   safety_penalty = safety_penalty * 0.6
+    --lighting
+    if data.highway == 'streetlamp' or data.lit == 'yes' then
+      safety_penalty = safety_penalty * 1.5
     -- else 
     --   safety_penalty = safety_penalty * 1.2
-    -- end
+    end
 
-    -- --speed limits
-    -- if data.maxspeed then
-    --   if data.maxspeed < 30 then
-    --     safety_penalty = safety_penalty * 1
-    --   elseif data.maxspeed < 70 then
-    --     safety_penalty = safety_penalty * 0.7
-    --   else
-    --     safety_penalty = safety_penalty * 0.3
-    --   end
-    -- end
+    -- --sidewalks
+    -- local tag = node:get_value_by_key("highway")
+    -- if not("pedestrian" == tag or "footway" == tag) then
+    if data.highway == 'pedestrian' or data.highway == 'footway' then
+      safety_penalty = safety_penalty * 1.3
+    -- else 
+    --   safety_penalty = safety_penalty * 1.3
+    end
+
+    --speed limits
+    if data.maxspeed then
+      if data.maxspeed < 30 then
+        safety_penalty = safety_penalty * 1.1
+      elseif data.maxspeed > 70 then
+        safety_penalty = safety_penalty * 0.9
+      end
+    end
 
     if result.forward_speed > 0 then
       -- convert from km/h to m/s
