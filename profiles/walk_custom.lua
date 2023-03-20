@@ -171,17 +171,11 @@ function safety_handler(profile,way,result,data)
     --lighting
     if data.highway == 'streetlamp' or data.lit == 'yes' then
       safety_penalty = safety_penalty * 1.5
-    -- else 
-    --   safety_penalty = safety_penalty * 1.2
     end
 
     -- --sidewalks
-    -- local tag = node:get_value_by_key("highway")
-    -- if not("pedestrian" == tag or "footway" == tag) then
     if data.highway == 'pedestrian' or data.highway == 'footway' then
       safety_penalty = safety_penalty * 1.3
-    -- else 
-    --   safety_penalty = safety_penalty * 1.3
     end
 
     --speed limits
