@@ -168,23 +168,9 @@ function safety_handler(profile,way,result,data)
     -- smaller penalty is worse, increases weight and decreases rate
     local safety_penalty = 1.0
 
-    --lighting
-    if data.highway == 'streetlamp' or data.lit == 'yes' then
-      safety_penalty = safety_penalty * 1.5
-    end
-
     --sidewalks
     if data.highway == 'pedestrian' or data.highway == 'footway' then
       safety_penalty = safety_penalty * 1.3
-    end
-
-    --speed limits
-    if data.maxspeed then
-      if data.maxspeed < 30 then
-        safety_penalty = safety_penalty * 1.1
-      elseif data.maxspeed > 70 then
-        safety_penalty = safety_penalty * 0.9
-      end
     end
 
     if result.forward_speed > 0 then

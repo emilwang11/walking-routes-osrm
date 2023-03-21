@@ -173,20 +173,6 @@ function safety_handler(profile,way,result,data)
       safety_penalty = safety_penalty * 1.5
     end
 
-    --sidewalks
-    if data.highway == 'pedestrian' or data.highway == 'footway' then
-      safety_penalty = safety_penalty * 1.3
-    end
-
-    --speed limits
-    if data.maxspeed then
-      if data.maxspeed < 30 then
-        safety_penalty = safety_penalty * 1.1
-      elseif data.maxspeed > 70 then
-        safety_penalty = safety_penalty * 0.9
-      end
-    end
-
     if result.forward_speed > 0 then
       -- convert from km/h to m/s
       result.forward_rate = (result.forward_speed * safety_penalty) / 3.6 
